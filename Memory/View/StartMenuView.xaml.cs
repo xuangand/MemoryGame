@@ -1,6 +1,7 @@
 ﻿using Memory.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,7 +27,13 @@ namespace Memory.View
         }
         private void Play_Clicked(object sender, RoutedEventArgs e)
         {
+            if (categoryBox.SelectedIndex == -1)
+            {
+                MessageBox.Show("Please select a category before starting the game.", "Selection Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             var startMenu = DataContext as StartMenuViewModel;
+            Debug.WriteLine(this.DataContext);
             startMenu.StartNewGame(categoryBox.SelectedIndex);
         }
     }

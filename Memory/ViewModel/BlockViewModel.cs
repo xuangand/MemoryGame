@@ -1,4 +1,5 @@
 ﻿using Memory.Model;
+using System.Windows;
 using System.Windows.Media;
 
 namespace Memory.ViewModel
@@ -19,6 +20,7 @@ namespace Memory.ViewModel
                 _isViewed = value;
                 OnPropertyChanged(nameof(BlockImageStatus));
                 OnPropertyChanged(nameof(BorderBrush));
+                OnPropertyChanged(nameof(IsSelectable));//Cập nhật trạng thái, đã chọn rồi thì không được chọn nữa
             }
         }
         public bool IsMatched
@@ -27,8 +29,8 @@ namespace Memory.ViewModel
             set
             {
                 _isMatched = value;
-                OnPropertyChanged("BlockImageStatus");
-                OnPropertyChanged("BorderBrush");
+                OnPropertyChanged(nameof(BlockImageStatus));
+                OnPropertyChanged(nameof(BorderBrush));
             }
         }
         public bool IsFailed
@@ -49,13 +51,14 @@ namespace Memory.ViewModel
                 if (IsViewed) return false;
                 return true;
             }
+            set { }
         }
         public string BlockImageStatus //Trạng thái của block
         {
             get
             {
-                if (_isMatched) return _block.ImageSource;
-                if (_isViewed) return _block.ImageSource;
+                if (_isMatched) return _block.ImageSource!;
+                if (_isViewed) return _block.ImageSource!;
                 return "/Memory;component/Assets/mystery_image.jpg";
             }
         }
@@ -77,8 +80,8 @@ namespace Memory.ViewModel
             Id = block.Id;
         }
 
-        public void MarkMatched() => _isMatched = true;
-        public void MarkFailed() => _isFailed = true;
+        public void MarkMatched() => IsMatched = true;
+        public void MarkFailed() => IsFailed = true;
         public void PeekAtImage()
         {
             IsViewed = true;
@@ -90,6 +93,17 @@ namespace Memory.ViewModel
             IsFailed = false;
             OnPropertyChanged(nameof(IsSelectable));
             OnPropertyChanged(nameof(BlockImageStatus));
+        }
+        public Visibility IsVisible { get; set; }
+        public void HideMatched()
+        {
+            IsVisible = Visibility.Hidden;
+            OnPropertyChanged(nameof(IsVisible));
+        }
+        public void ShowMatched()
+        {
+            IsVisible = Visibility.Visible;
+            OnPropertyChanged(nameof(IsVisible));
         }
 
     }

@@ -18,6 +18,7 @@ namespace Memory.ViewModel
 
         private readonly DispatcherTimer _peekTimer;
         private readonly DispatcherTimer _openingTimer;
+        private readonly DispatcherTimer _visibleTimer;
 
         private const int _peekSeconds = 3;
         private const int _openSeconds = 5;
@@ -25,13 +26,14 @@ namespace Memory.ViewModel
         //constructor
         public BlockCollectionViewModel()
         {
-            _peekTimer = new DispatcherTimer();
-            _peekTimer.Interval = new TimeSpan(0, 0, _peekSeconds);
-            _peekTimer.Tick += PeekTimer_Tick;
+            _peekTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, _peekSeconds) };
+            _peekTimer.Tick += PeekTimer_Tick!;
 
-            _openingTimer = new DispatcherTimer();
-            _openingTimer.Interval = new TimeSpan(0, 0, _openSeconds);
-            _openingTimer.Tick += OpeningTimer_Tick;
+            _openingTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, _openSeconds) };
+            _openingTimer.Tick += OpeningTimer_Tick!;
+
+            _visibleTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, _peekSeconds) };
+            _visibleTimer.Tick += VisibleTimer_Tick!;
         }
 
         public bool AreBlocksActive
@@ -54,7 +56,7 @@ namespace Memory.ViewModel
                 return true;
             }
         }
-        public bool CanSelect { get; set; }
+        public bool CanSelect { get; private set; }
         private List<Block> GetModelsFrom(string relativePath) //Hàm khởi tạo block model
         {
             var models = new List<Block>();
@@ -93,42 +95,45 @@ namespace Memory.ViewModel
             ShuffleBlocks();
             OnPropertyChanged(nameof(Blocks));
         }
-        public void HideUnMacthed()
-        {
-            _peekTimer.Start();
-        }
         public void SelectBlock(BlockViewModel block)
         {
             block.PeekAtImage();
-            if(SelectedBlock1 == null) SelectedBlock1 = block;
-            else if (SelectedBlock2 == null)
-            {
-                SelectedBlock2 = block;
-                HideUnMacthed();
-            }
-            OnPropertyChanged(nameof(AreBlocksActive));
+            if (SelectedBlock1 == null) SelectedBlock1 = block;
+            else SelectedBlock2 ??= block;
+
+            //Đóng những block nào đang mở nhưng không match và ẩn những block nào đã match khi click vào block thứ 3
+            foreach (var unSelectedBlock in Blocks)
+                if (unSelectedBlock != SelectedBlock1 && unSelectedBlock != SelectedBlock2)
+                {
+                    if (unSelectedBlock.IsViewed) unSelectedBlock.ClosePeek(); //Đang mở nhưng không match
+                    if (unSelectedBlock.IsMatched) unSelectedBlock.HideMatched();//đã match thì ẩn đi
+                }
         }
         public void ClearSelected()
         {
             SelectedBlock1 = null;
             SelectedBlock2 = null;
-            CanSelect = false;
+            //CanSelect = false;
         }
         public void MatchFailed()
         {
-            SelectedBlock1.MarkFailed();
-            SelectedBlock2.MarkFailed();
+            SelectedBlock1?.MarkFailed();
+            SelectedBlock2?.MarkFailed();
             ClearSelected();
+            if (_peekTimer.IsEnabled) _peekTimer.Stop(); //Nếu thời gian đã chạy thì restart
+            _peekTimer.Start();//hide unmatched
         }
         public void MatchSuccess()
         {
-            SelectedBlock1.MarkMatched();
-            SelectedBlock2.MarkMatched();
+            SelectedBlock1?.MarkMatched();
+            SelectedBlock2?.MarkMatched();
             ClearSelected();
+            if (_visibleTimer.IsEnabled) _visibleTimer.Stop();
+            _visibleTimer.Start();
         }
         public bool CheckIfMatched()
         {
-            if (SelectedBlock1.Id == SelectedBlock2.Id)
+            if (SelectedBlock1?.Id == SelectedBlock2?.Id)
             {
                 MatchSuccess();
                 return true;
@@ -136,15 +141,20 @@ namespace Memory.ViewModel
             MatchFailed();
             return false;
         }
-        public void RevealUnMatched()
+        public void RevealUnMatchedAndMatched()
         {
-            foreach(var block in Blocks!)
+            foreach (var block in Blocks!)
             {
                 if (!block.IsMatched)
                 {
                     _peekTimer.Stop();
-                    block.MarkFailed();
+                    block.MarkFailed(); //Tô đỏ những ô còn lại chưa được match
                     block.PeekAtImage();
+                }
+                else
+                {
+                    _visibleTimer.Stop();
+                    block.ShowMatched();
                 }
             }
         }
@@ -154,26 +164,24 @@ namespace Memory.ViewModel
         }
         private void OpeningTimer_Tick(object sender, EventArgs e)
         {
-            foreach(var block in Blocks!)
-            {
-                block.ClosePeek();
-                CanSelect = true;
-            }
+            foreach (var block in Blocks) block.ClosePeek();
             OnPropertyChanged(nameof(AreBlocksActive));
             _openingTimer.Stop();
         }
         private void PeekTimer_Tick(object sender, EventArgs e)
         {
-            foreach (var block in Blocks!)
-            {
-                if (!block.IsMatched)
-                {
+            foreach (var block in Blocks)
+                if (!block.IsMatched && block != SelectedBlock1)
                     block.ClosePeek();
-                    CanSelect = true;
-                }
-            }
             OnPropertyChanged(nameof(AreBlocksActive));
             _peekTimer.Stop();
+        }
+        private void VisibleTimer_Tick(object sender, EventArgs e)
+        {
+            foreach (var block in Blocks)
+                if (block.IsMatched)
+                    block.HideMatched();
+            _visibleTimer.Stop();
         }
     }
 }

@@ -7,7 +7,7 @@
         xmlns:viewmodel="clr-namespace:Memory.ViewModel"
         xmlns:views="clr-namespace:Memory.View"
         mc:Ignorable="d"
-        Title="Memory Game" Height="450" Width="800">
+        Title="Memory Game" Height="450" Width="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <DataTemplate DataType="{x:Type viewmodel:GameViewModel}">
             <views:MainMenu DataContext="{Binding}" />

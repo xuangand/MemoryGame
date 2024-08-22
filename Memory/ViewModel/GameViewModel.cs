@@ -43,11 +43,8 @@ namespace Memory.ViewModel
         }
         public void ClickedBlock(object block)
         {
-            if (Blocks.CanSelect)
-            {
-                var selected = block as BlockViewModel;
-                Blocks.SelectBlock(selected);
-            }
+            //var selected = block as BlockViewModel;
+            Blocks.SelectBlock((BlockViewModel)block);
             if (!Blocks.AreBlocksActive)
             {
                 if (Blocks.CheckIfMatched()) GameInfo.Award();
@@ -57,15 +54,16 @@ namespace Memory.ViewModel
         }
         public void GameStatus()
         {
-            if (GameInfo.MatchAttempts < 0)
+            if (GameInfo.MatchAttempts <= 0)
             {
                 GameInfo.GameStatus(false);
-                Blocks.RevealUnMatched();
+                Blocks.RevealUnMatchedAndMatched();
                 Timer.Stop();
             }
             if (Blocks.AllBlockMatched)
             {
                 GameInfo.GameStatus(true);
+                Blocks.RevealUnMatchedAndMatched();
                 Timer.Stop();
             }
         }

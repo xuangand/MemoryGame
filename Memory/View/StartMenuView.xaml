@@ -31,7 +31,7 @@
                     <ComboBoxItem>Foods</ComboBoxItem>
                 </ComboBox.Items>
             </ComboBox>
-            <Button DockPanel.Dock="Top" Padding="25" Click="Play_Clicked" Background="#FF0E0E0E" Foreground="#FFF3FF00" FontSize="18">Start Game</Button>
+            <Button x:Name="StartGameButton" DockPanel.Dock="Top" Padding="25" Click="Play_Clicked" Background="#FF0E0E0E" Foreground="#FFF3FF00" FontSize="18">Start Game</Button>
         </DockPanel>
     </Grid>
 </UserControl>
